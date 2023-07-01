@@ -26,6 +26,12 @@ in which work will be prioritized for their implementation.
 | Generating and publishing API documentation | ❌ |
 | Running contract-based tests on the clients | ❌ |
 
+> ⚠️ _Note:_
+>
+> It is not yet clear if the best implementation of this reusable functionality
+> is via a _composite action_ or a _reusable workflow_. Part of the planned
+> work includes exploring what's best (probably a mix between the two).
+
 ### Feature statuses
 
 Feature status icons have the following meanings:
