@@ -30,6 +30,6 @@ in which work will be prioritized for their implementation.
 
 Feature status icons have the following meanings:
 
-* ✅ - Completely implemented
+* ✅ - Implemented
 * ⏳ - Partially implemented
 * ❌ - Not implemented
