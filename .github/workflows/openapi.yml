@@ -1,0 +1,102 @@
+name: "OpenAPI Client and Documentation Generation"
+on:
+  workflow_call:
+    inputs:
+      openapiSpec:
+        required: true
+        type: string
+        description: "File path that contains the OpenAPI specification"
+      languages:
+        required: true
+        type: string
+        description: "Languages for which to generate a client. ⚠️ Can be one of python/java/typescript, must be a JSON array."
+      docsDestination:
+        required: true
+        type: string
+        description: "Destination for publishing documentation."
+    secrets:
+      rubyforge_token:
+        required: false
+        description: "Token to use for Rubyforge, optional"
+      npm_token:
+        required: false
+        description: "Token to use for NPM registry, optional"
+      github_token:
+        required: false
+        description: "Token to use for Github Packages, optional"
+      backstage_token:
+        required: false
+        description: "Token to use for Backstage, optional"
+      confluence_token:
+        required: false
+        description: "Token to use for Confluence, optional"
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        language: ${{ fromJSON(inputs.languages) }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Generate client
+        uses: openapitools/openapi-generator-cli@v2
+        with:
+          version: 'latest'
+          generatorName: ${{ matrix.language }}
+          inputSpec: ${{ inputs.openapiSpec }}
+          output: ./clients/${{ matrix.language }}
+
+      - name: Generate documentation
+        uses: openapitools/openapi-generator-cli@v2
+        with:
+          version: 'latest'
+          generatorName: html2
+          inputSpec: ${{ inputs.openapiSpec }}
+          output: ./docs
+
+      - name: Publish Documentation to GitHub Pages
+        if: inputs.docsDestination == 'github'
+        uses: actions/gh-pages@v3
+        with:
+          github_token: ${{ secrets.github_token }}
+          publish_dir: ./docs
+
+      - name: Publish Documentation to Backstage
+        if: inputs.docsDestination == 'backstage'
+        run: |
+          curl -X POST -H 'Authorization: Bearer ${{ secrets.backstage_token }}' -F 'file=@./docs' https://backstage.yourcompany.com/api/techdocs/publish
+
+      - name: Publish Documentation to Confluence
+        if: inputs.docsDestination == 'confluence'
+        run: |
+          # Install the Confluence publisher tool (replace with actual command if a different tool is used)
+          pip install confluence-publisher
+          # Use the tool to publish the documentation (replace with actual command if a different tool is used)
+          confluence-publisher --token ${{ secrets.confluence_token }} --doc-path ./docs --confluence-url https://confluence.yourcompany.com
+
+      - name: Publish to Rubyforge
+        if: matrix.language == 'python'
+        run: |
+          # Your command to publish to Rubyforge goes here
+        env:
+          RUBYFORGE_TOKEN: ${{ secrets.rubyforge_token }}
+
+      - name: Publish to NPM
+        if: matrix.language == 'typescript-axios'
+        run: |
+          npm config set '//registry.npmjs.org/:_authToken' ${{ secrets.npm_token }}
+          cd ./clients/typescript
+          npm publish
+        env:
+          NPM_TOKEN: ${{ secrets.npm_token }}
+
+      - name: Publish to GitHub Packages
+        if: matrix.language != 'python' && matrix.language != 'typescript-axios'
+        run: |
+          # Your command to publish to GitHub Packages goes here
+        env:
+          GITHUB_TOKEN: ${{ secrets.github_token }}
