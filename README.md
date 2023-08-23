@@ -1,4 +1,4 @@
-# A Github ~Action~ Reusable Workflow for OpenAPI consumers
+# A Reusable Github Workflow for OpenAPI consumers
 
 Generates client code and documentation from OpenAPI specs and publishes
 generated artifacts.
